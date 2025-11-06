@@ -6,6 +6,7 @@
     using Initializer;
     using Microsoft.EntityFrameworkCore;
     using System.Text;
+    using static System.Reflection.Metadata.BlobBuilder;
 
     public class StartUp
     {
@@ -14,13 +15,20 @@
             using var db = new BookShopContext();
             //DbInitializer.ResetDatabase(db);
 
-            using var context = new BookShopContext();
+            //using var context = new BookShopContext();
 
             // Initialize your database if needed (optional)
             // DbInitializer.ResetDatabase(context);
 
-            string result = GetGoldenBooks(context);
+            //string result = GetGoldenBooks(context);
+           // Console.WriteLine(result);
+
+            using var context = new BookShopContext();
+
+            string result = GetBooksByPrice(context);
             Console.WriteLine(result);
+
+
         }
             // Problem 02 
         public static string GetBooksByAgeRestriction(BookShopContext context, string command)
@@ -62,6 +70,32 @@
             return string.Join(Environment.NewLine, goldenBooks);
         }
 
+        // Problem 04
+
+        public static string GetBooksByPrice(BookShopContext context)
+        {
+            var booksByPrice = context
+                .Books
+                .Where(b => b.Price > 40)
+                .OrderByDescending(b => b.Price)
+                .Select(b => new
+                {
+                    b.Title,
+                    b.Price
+                })
+                .ToList();
+
+            StringBuilder sb = new StringBuilder();
+
+            foreach (var book in booksByPrice)
+            {
+                sb.AppendLine($"{book.Title} - ${book.Price:F2}");
+            }
+
+            return sb.ToString().TrimEnd();
+        }
+
+        
         // Problem 06 
         public static string GetBooksByCategory(BookShopContext context, string input)
         {
