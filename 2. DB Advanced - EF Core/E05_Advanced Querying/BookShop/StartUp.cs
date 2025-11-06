@@ -21,11 +21,20 @@
             // DbInitializer.ResetDatabase(context);
 
             //string result = GetGoldenBooks(context);
-           // Console.WriteLine(result);
+            // Console.WriteLine(result);
 
+            ////P04
+            //using var context = new BookShopContext();
+
+            //string result = GetBooksByPrice(context);
+            //Console.WriteLine(result);
+
+            //P05
             using var context = new BookShopContext();
 
-            string result = GetBooksByPrice(context);
+            int year = int.Parse(Console.ReadLine());
+            string result = GetBooksNotReleasedIn(context, year);
+
             Console.WriteLine(result);
 
 
@@ -95,7 +104,21 @@
             return sb.ToString().TrimEnd();
         }
 
-        
+        // Problem 05
+
+        public static string GetBooksNotReleasedIn(BookShopContext context, int year)
+        {
+            var booksNotReleasedIn = context
+                .Books
+                .Where(b => b.ReleaseDate.HasValue && b.ReleaseDate.Value.Year != year)
+                .OrderBy(b => b.BookId)
+                .Select(b => b.Title)
+                .ToList();
+
+            return string.Join(Environment.NewLine, booksNotReleasedIn);
+
+        }
+
         // Problem 06 
         public static string GetBooksByCategory(BookShopContext context, string input)
         {
