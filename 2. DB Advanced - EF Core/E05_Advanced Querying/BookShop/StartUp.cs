@@ -5,6 +5,7 @@
     using Data;
     using Initializer;
     using Microsoft.EntityFrameworkCore;
+    using System.Globalization;
     using System.Text;
     using static System.Reflection.Metadata.BlobBuilder;
 
@@ -29,12 +30,20 @@
             //string result = GetBooksByPrice(context);
             //Console.WriteLine(result);
 
-            //P05
+            ////P05
+            //using var context = new BookShopContext();
+
+            //int year = int.Parse(Console.ReadLine());
+            //string result = GetBooksNotReleasedIn(context, year);
+
+            //Console.WriteLine(result);
+
+            //P07
             using var context = new BookShopContext();
 
-            int year = int.Parse(Console.ReadLine());
-            string result = GetBooksNotReleasedIn(context, year);
+            string date = Console.ReadLine();
 
+            string result = GetBooksReleasedBefore(context, date);
             Console.WriteLine(result);
 
 
@@ -148,6 +157,33 @@
 
             return sb.ToString().TrimEnd();
         }
+
+        // Problem 07
+        public static string GetBooksReleasedBefore(BookShopContext context, string date)
+        {
+            DateTime givenDate = DateTime.ParseExact(date, "dd-MM-yyyy", CultureInfo.InvariantCulture);
+
+            var books = context.Books
+                .Where(b => b.ReleaseDate < givenDate)
+                .OrderByDescending(b => b.ReleaseDate)
+                .Select(b => new
+                {
+                    b.Title,
+                    b.EditionType,
+                    b.Price
+                })
+                .ToList();
+
+            StringBuilder sb = new StringBuilder();
+
+            foreach (var b in books)
+            {
+                sb.AppendLine($"{b.Title} - {b.EditionType} - ${b.Price:F2}");
+            }
+
+            return sb.ToString().TrimEnd();
+        }
+        
 
         // Problem 08 
         public static string GetAuthorNamesEndingIn(BookShopContext context, string input)
