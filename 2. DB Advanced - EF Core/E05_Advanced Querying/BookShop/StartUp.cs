@@ -39,11 +39,27 @@
             //Console.WriteLine(result);
 
             //P07
+            //using var context = new BookShopContext();
+
+            //string date = Console.ReadLine();
+
+            //string result = GetBooksReleasedBefore(context, date);
+            //Console.WriteLine(result);
+
+            // P09
+            //using var context = new BookShopContext();
+
+            //string input = Console.ReadLine();
+            //string result = GetBookTitlesContaining(context, input);
+
+            //Console.WriteLine(result);
+
+            // P10
             using var context = new BookShopContext();
 
-            string date = Console.ReadLine();
+            string input = Console.ReadLine();
+            string result = GetBooksByAuthor(context, input);
 
-            string result = GetBooksReleasedBefore(context, date);
             Console.WriteLine(result);
 
 
@@ -209,6 +225,42 @@
             }
 
             return sb.ToString().TrimEnd();
+        }
+
+        // Problem 09
+        public static string GetBookTitlesContaining(BookShopContext context, string input)
+        {
+            input = input.ToLower();
+
+            var titles = context
+                .Books
+                .Where(b => b.Title.ToLower().Contains(input))
+                .Select(b => b.Title)
+                .OrderBy(t => t)
+                .ToList();
+
+            return string.Join(Environment.NewLine, titles);
+        }
+
+        // Problem 10
+        public static string GetBooksByAuthor(BookShopContext context, string input)
+        {
+            input = input.ToLower();
+
+            var books = context.Books
+                .Where(b => b.Author.LastName.ToLower().StartsWith(input))
+                .OrderBy(b => b.BookId)
+                .Select(b => new
+                {
+                    b.Title,
+                    AuthorName = $"{b.Author.FirstName} {b.Author.LastName}"
+                })
+                .ToList();
+
+            var result = string.Join(Environment.NewLine,
+                books.Select(b => $"{b.Title} ({b.AuthorName})"));
+
+            return result;
         }
 
         // Problem 12 
