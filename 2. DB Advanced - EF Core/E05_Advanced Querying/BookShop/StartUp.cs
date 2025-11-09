@@ -55,14 +55,28 @@
             //Console.WriteLine(result);
 
             // P10
-            using var context = new BookShopContext();
+            //using var context = new BookShopContext();
 
-            string input = Console.ReadLine();
-            string result = GetBooksByAuthor(context, input);
+            //string input = Console.ReadLine();
+            //string result = GetBooksByAuthor(context, input);
 
-            Console.WriteLine(result);
+            //Console.WriteLine(result);
 
+            // P11
+            //using (var context = new BookShopContext())
+            //{
+            //    int lengthCheck = int.Parse(Console.ReadLine());
+            //    int result = CountBooks(context, lengthCheck);
 
+            //    Console.WriteLine(result);
+            //}
+
+            // P14
+            using (var context = new BookShopContext())
+            {
+                string result = GetMostRecentBooks(context);
+                Console.WriteLine(result);
+            }
         }
             // Problem 02 
         public static string GetBooksByAgeRestriction(BookShopContext context, string command)
@@ -263,6 +277,17 @@
             return result;
         }
 
+        // Problem 11
+        public static int CountBooks(BookShopContext context, int lengthCheck)
+        {
+            int count = context
+                .Books
+                .Where(b => b.Title.Length > lengthCheck)
+                .Count();
+
+            return count;
+        }
+
         // Problem 12 
         public static string CountCopiesByAuthor(BookShopContext context)
         {
@@ -315,6 +340,42 @@
 
             return sb.ToString().TrimEnd();
         }
+
+        // Problem 14
+        public static string GetMostRecentBooks(BookShopContext context)
+        {
+            var categories = context.Categories
+                .Select(c => new
+                {
+                    CategoryName = c.Name,
+                    Books = c.CategoryBooks
+                        .Select(cb => new
+                        {
+                            cb.Book.Title,
+                            cb.Book.ReleaseDate
+                        })
+                        .OrderByDescending(b => b.ReleaseDate)
+                        .Take(3)
+                        .ToList()
+                })
+                .OrderBy(c => c.CategoryName)
+                .ToList();
+
+            var sb = new StringBuilder();
+
+            foreach (var category in categories)
+            {
+                sb.AppendLine($"--{category.CategoryName}");
+
+                foreach (var book in category.Books)
+                {
+                    sb.AppendLine($"{book.Title} ({book.ReleaseDate.Value.Year})");
+                }
+            }
+
+            return sb.ToString().TrimEnd();
+        }
+    
 
         // Problem 15        
         public static void IncreasePrices(BookShopContext context)
