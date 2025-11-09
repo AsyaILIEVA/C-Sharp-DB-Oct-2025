@@ -72,10 +72,17 @@
             //}
 
             // P14
+            //using (var context = new BookShopContext())
+            //{
+            //    string result = GetMostRecentBooks(context);
+            //    Console.WriteLine(result);
+            //}
+
+            // P16
             using (var context = new BookShopContext())
             {
-                string result = GetMostRecentBooks(context);
-                Console.WriteLine(result);
+                int deletedBooksCount = RemoveBooks(context);
+                Console.WriteLine(deletedBooksCount);
             }
         }
             // Problem 02 
@@ -392,7 +399,24 @@
             context.SaveChanges();
         }
 
-        
+        // Problem 16
+        public static int RemoveBooks(BookShopContext context)
+        {
+            var booksToRemove = context.Books
+                .Where(b => b.Copies < 4200)
+                .ToList();
+
+            int count = booksToRemove.Count;
+
+            context.Books.RemoveRange(booksToRemove);
+
+            context.SaveChanges();
+
+            return count;
+        }
+
+
+
     }
 }
 
