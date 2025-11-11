@@ -20,11 +20,11 @@ namespace CarDealer
             // Console.WriteLine(Directory.GetCurrentDirectory());
             string jsonFileDirPath = Path
                 .Combine(Directory.GetCurrentDirectory(), "../../../Datasets/");
-            string jsonFileName = "parts.json";
+            string jsonFileName = "cars.json";
             string jsonFileText = File
                 .ReadAllText(jsonFileDirPath + jsonFileName);
 
-            string result = ImportParts(dbContext, jsonFileText);
+            string result = ImportCars(dbContext, jsonFileText);
             Console.WriteLine(result);
         }
 
@@ -110,6 +110,56 @@ namespace CarDealer
                 context.SaveChanges();
             }
             return $"Successfully imported {partsToImport.Count}.";
+        }
+
+        //Problem 11
+        public static string ImportCars(CarDealerContext context, string inputJson)
+        {
+            ICollection<Car> carsToImport = new List<Car>();
+            ICollection<PartCar> partsCarsToImport = new List<PartCar>();
+
+            IEnumerable<ImportCarDto>? carDtos = JsonConvert
+                .DeserializeObject<ImportCarDto[]>(inputJson);
+            if (carDtos != null)
+            {
+                foreach (ImportCarDto carDto in carDtos)
+                {
+                    if (!IsValid(carDto))
+                    {
+                        continue;
+                    }
+
+                    Car newCar = new Car()
+                    {
+                        Make = carDto.Make,
+                        Model = carDto.Model,
+                        TraveledDistance = carDto.TraveledDistance
+                    };
+                    carsToImport.Add(newCar);
+
+                    foreach(int partId in carDto.PartsIds.Distinct())
+                    {
+                        if (!context.Parts.Any(p => p.Id == partId))
+                        {
+                            continue;
+                        }
+
+                        PartCar newPartCar = new PartCar()
+                        {
+                            PartId = partId,
+                            Car = newCar
+                        };
+                        partsCarsToImport.Add(newPartCar);
+                    }
+
+                }
+                context.Cars.AddRange(carsToImport);
+                context.PartsCars.AddRange(partsCarsToImport);
+
+                context.SaveChanges();
+            }
+
+            return $"Successfully imported {carsToImport.Count}.";
         }
 
         private static bool IsValid(object obj)
