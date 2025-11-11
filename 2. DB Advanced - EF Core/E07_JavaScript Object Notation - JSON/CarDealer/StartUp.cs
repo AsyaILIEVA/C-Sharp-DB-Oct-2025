@@ -4,6 +4,7 @@ using CarDealer.Models;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
+using System.IO;
 using System.Xml;
 
 namespace CarDealer
@@ -13,20 +14,21 @@ namespace CarDealer
         public static void Main()
         {
             using CarDealerContext dbContext = new CarDealerContext();
-            dbContext.Database.EnsureDeleted();
-            dbContext.Database.EnsureCreated();
+            //dbContext.Database.EnsureDeleted();
+            //dbContext.Database.EnsureCreated();
 
             // Console.WriteLine(Directory.GetCurrentDirectory());
             string jsonFileDirPath = Path
                 .Combine(Directory.GetCurrentDirectory(), "../../../Datasets/");
-            string jsonFileName = "suppliers.json";
+            string jsonFileName = "parts.json";
             string jsonFileText = File
                 .ReadAllText(jsonFileDirPath + jsonFileName);
 
-            string result = ImportSuppliers(dbContext, jsonFileText);
+            string result = ImportParts(dbContext, jsonFileText);
             Console.WriteLine(result);
         }
 
+        //Problem 09
         public static string ImportSuppliers(CarDealerContext context, string inputJson)
         {
             ICollection<Supplier> suppliersToImport = new List<Supplier>();
@@ -61,6 +63,53 @@ namespace CarDealer
             }
 
             return $"Successfully imported {suppliersToImport.Count}.";
+        }
+
+        //Problem 10
+        public static string ImportParts(CarDealerContext context, string inputJson)
+        {
+            ICollection<Part> partsToImport = new List<Part>();
+            //Choose single query + stroe in memory, when suppliers count is small
+            ICollection<int> existingSupppliers = context
+                .Suppliers
+                .AsNoTracking()
+                .Select(s => s.Id)
+                .ToArray();
+
+            IEnumerable<ImportPartDto>? partDtos = JsonConvert
+                .DeserializeObject<ImportPartDto[]>(inputJson);
+            if (partDtos != null)
+            {
+                foreach (ImportPartDto partDto in partDtos)
+                {
+                    //First validate, then insert
+                    if (!IsValid(partDto))
+                    {
+                        continue;
+                    }
+
+                    bool isSupplierIdValid = int
+                        .TryParse(partDto.SupplierId, out int supplierId);
+                    if (!isSupplierIdValid ||
+                        !existingSupppliers.Contains(supplierId)) 
+                    {
+                        continue;
+                    }
+
+                    Part newPart = new Part()
+                    {
+                        Name = partDto.Name,
+                        Price = partDto.Price,
+                        Quantity = partDto.Quantity,
+                        SupplierId = supplierId,
+                    };
+                    partsToImport.Add(newPart);
+                }
+
+                context.Parts.AddRange(partsToImport);
+                context.SaveChanges();
+            }
+            return $"Successfully imported {partsToImport.Count}.";
         }
 
         private static bool IsValid(object obj)
