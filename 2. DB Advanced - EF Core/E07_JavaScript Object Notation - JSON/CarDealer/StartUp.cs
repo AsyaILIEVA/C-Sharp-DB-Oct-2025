@@ -22,11 +22,11 @@ namespace CarDealer
             // Console.WriteLine(Directory.GetCurrentDirectory());
             string jsonFileDirPath = Path
                 .Combine(Directory.GetCurrentDirectory(), "../../../Datasets/");
-            string jsonFileName = "customers.json";
+            string jsonFileName = "sales.json";
             string jsonFileText = File
                 .ReadAllText(jsonFileDirPath + jsonFileName);
 
-            string result = ImportCustomers(dbContext, jsonFileText);
+            string result = ImportSales(dbContext, jsonFileText);
             Console.WriteLine(result);
         }
 
@@ -210,7 +210,35 @@ namespace CarDealer
         //Problem 13
         public static string ImportSales(CarDealerContext context, string inputJson)
         {
+            ICollection<Sale> salesToImport = new List<Sale>();
 
+            IEnumerable<ImportSaleDto>? saleDtos = JsonConvert
+                .DeserializeObject<ImportSaleDto[]>(inputJson);
+            if (saleDtos != null)
+            {
+                foreach (ImportSaleDto saleDto in saleDtos)
+                {
+                    bool isCarIdExisting = context
+                        .Cars.Any(c => c.Id == saleDto.CarId);
+                    if (!isCarIdExisting)
+                    {
+                        continue;
+                    }
+
+                    Sale newSale = new Sale()
+                    {
+                        CarId = saleDto.CarId,
+                        CustomerId = saleDto.CustomerId,
+                        Discount = saleDto.Discount
+                    };
+                    salesToImport.Add(newSale);
+                }
+
+                context.Sales.AddRange(salesToImport);
+                context.SaveChanges();
+            }
+
+            return $"Successfully imported {salesToImport.Count}.";
         }
 
         private static bool IsValid(object obj)
