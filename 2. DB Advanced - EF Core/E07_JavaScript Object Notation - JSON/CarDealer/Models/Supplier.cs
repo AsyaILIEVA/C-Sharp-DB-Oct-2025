@@ -8,7 +8,6 @@
 
         public bool IsImporter { get; set; }
 
-        public virtual ICollection<Part> Parts { get; set; } 
-            = new List<Part>();
+        public ICollection<Part> Parts { get; set; } = new List<Part>();
     }
 }

@@ -1,12 +1,12 @@
-[   // Array
-  { // Object1
+[
+  {
     "name": "3M Company",
     "isImporter": true
   },
-  { // Object2       ------   Dto represents a structure of single object
+  {
     "name": "Agway Inc.",
     "isImporter": false
-  },              // ------
+  },
   {
     "name": "Anthem, Inc.",
     "isImporter": true

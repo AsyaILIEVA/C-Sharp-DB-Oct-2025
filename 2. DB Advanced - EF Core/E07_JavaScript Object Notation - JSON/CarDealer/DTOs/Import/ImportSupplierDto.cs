@@ -1,7 +1,8 @@
 ﻿namespace CarDealer.DTOs.Import
 {
-    using Newtonsoft.Json;
     using System.ComponentModel.DataAnnotations;
+
+    using Newtonsoft.Json;
 
     public class ImportSupplierDto
     {

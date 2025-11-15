@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
-
-namespace CarDealer.DTOs.Import
+﻿namespace CarDealer.DTOs.Import
 {
+    using System.ComponentModel.DataAnnotations;
+
+    using Newtonsoft.Json;
+
     public class ImportCarDto
     {
         [Required]
@@ -21,9 +17,7 @@ namespace CarDealer.DTOs.Import
         [JsonProperty("traveledDistance")]
         public long TraveledDistance { get; set; }
 
-        
         [JsonProperty("partsId")]
         public int[] PartsIds { get; set; } = null!;
-
     }
 }

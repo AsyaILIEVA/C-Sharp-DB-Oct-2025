@@ -1,16 +1,16 @@
-﻿using CarDealer.Data;
-using CarDealer.DTOs.Import;
-using CarDealer.Models;
-using Castle.Core.Resource;
-using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json;
-using System.ComponentModel.DataAnnotations;
-using System.Globalization;
-using System.IO;
-using System.Xml;
-
-namespace CarDealer
+﻿namespace CarDealer
 {
+    using System.ComponentModel.DataAnnotations;
+    using System.Globalization;
+    using System.IO;
+
+    using Data;
+    using DTOs.Import;
+    using Models;
+
+    using Microsoft.EntityFrameworkCore;
+    using Newtonsoft.Json;
+
     public class StartUp
     {
         public static void Main()
@@ -19,18 +19,55 @@ namespace CarDealer
             //dbContext.Database.EnsureDeleted();
             //dbContext.Database.EnsureCreated();
 
-            // Console.WriteLine(Directory.GetCurrentDirectory());
-            string jsonFileDirPath = Path
-                .Combine(Directory.GetCurrentDirectory(), "../../../Datasets/");
-            string jsonFileName = "sales.json";
-            string jsonFileText = File
-                .ReadAllText(jsonFileDirPath + jsonFileName);
+            //string jsonFileDirPath = Path
+            //    .Combine(Directory.GetCurrentDirectory(), "../../../Datasets/");
+            //string jsonFileName = "sales.json";
+            //string jsonFileText = File
+            //    .ReadAllText(jsonFileDirPath + jsonFileName);
 
-            string result = ImportSales(dbContext, jsonFileText);
+            //string result = ImportSuppliers(dbContext, jsonFileText);
+            //Console.WriteLine(result);
+
+            //string result = ImportParts(dbContext, jsonFileText);
+            //Console.WriteLine(result);
+
+            //string result = ImportCars(dbContext, jsonFileText);
+            //Console.WriteLine(result);
+
+            //string result = ImportCustomers(dbContext, jsonFileText);
+            //Console.WriteLine(result);
+
+            //string result = ImportSales(dbContext, jsonFileText);
+            //Console.WriteLine(result);
+
+            //string result = GetSalesWithAppliedDiscount(dbContext);
+            //Console.WriteLine(result);
+
+            string result = GetTotalSalesByCustomer(dbContext);
             Console.WriteLine(result);
         }
 
-        //Problem 09
+        //18. Export Total Sales by Customer
+        public static string GetTotalSalesByCustomer(CarDealerContext context)
+        {
+            var customers = context.Customers
+                .Where(c => c.Sales.Any(s => s.Car != null))
+                .Select(c => new
+                {
+                    fullName = c.Name,
+                    boughtCars = c.Sales.Count(),
+                    spentMoney = c.Sales
+                        .SelectMany(s => s.Car.PartsCars)
+                        .Sum(pc => pc.Part.Price)
+                })
+                .OrderByDescending(c => c.spentMoney)
+                .ThenByDescending(c => c.boughtCars)
+                .ToList();
+
+            return JsonConvert.SerializeObject(customers, Formatting.Indented);
+        }
+
+        // Problem 09
         public static string ImportSuppliers(CarDealerContext context, string inputJson)
         {
             ICollection<Supplier> suppliersToImport = new List<Supplier>();
@@ -46,12 +83,13 @@ namespace CarDealer
                         continue;
                     }
 
-                    bool isImporterValidVal=bool
+                    bool isImporterValidVal = bool
                         .TryParse(supplierDto.IsImporter, out bool isImporter);
                     if (!isImporterValidVal)
                     {
                         continue;
                     }
+
                     Supplier newSupplier = new Supplier()
                     {
                         Name = supplierDto.Name,
@@ -67,12 +105,12 @@ namespace CarDealer
             return $"Successfully imported {suppliersToImport.Count}.";
         }
 
-        //Problem 10
+        // Problem 10
         public static string ImportParts(CarDealerContext context, string inputJson)
         {
             ICollection<Part> partsToImport = new List<Part>();
-            //Choose single query + stroe in memory, when suppliers count is small
-            ICollection<int> existingSupppliers = context
+            // Choose single query + store in memory when suppliers count is small
+            ICollection<int> existingSuppliers = context
                 .Suppliers
                 .AsNoTracking()
                 .Select(s => s.Id)
@@ -84,7 +122,7 @@ namespace CarDealer
             {
                 foreach (ImportPartDto partDto in partDtos)
                 {
-                    //First validate, then insert
+                    // First validation, then insertion
                     if (!IsValid(partDto))
                     {
                         continue;
@@ -92,8 +130,8 @@ namespace CarDealer
 
                     bool isSupplierIdValid = int
                         .TryParse(partDto.SupplierId, out int supplierId);
-                    if (!isSupplierIdValid ||
-                        !existingSupppliers.Contains(supplierId)) 
+                    if ((!isSupplierIdValid) ||
+                        (!existingSuppliers.Contains(supplierId)))
                     {
                         continue;
                     }
@@ -103,7 +141,7 @@ namespace CarDealer
                         Name = partDto.Name,
                         Price = partDto.Price,
                         Quantity = partDto.Quantity,
-                        SupplierId = supplierId,
+                        SupplierId = supplierId
                     };
                     partsToImport.Add(newPart);
                 }
@@ -111,10 +149,11 @@ namespace CarDealer
                 context.Parts.AddRange(partsToImport);
                 context.SaveChanges();
             }
+
             return $"Successfully imported {partsToImport.Count}.";
         }
 
-        //Problem 11
+        // Problem 11
         public static string ImportCars(CarDealerContext context, string inputJson)
         {
             ICollection<Car> carsToImport = new List<Car>();
@@ -139,7 +178,7 @@ namespace CarDealer
                     };
                     carsToImport.Add(newCar);
 
-                    foreach(int partId in carDto.PartsIds.Distinct())
+                    foreach (int partId in carDto.PartsIds.Distinct())
                     {
                         if (!context.Parts.Any(p => p.Id == partId))
                         {
@@ -153,9 +192,9 @@ namespace CarDealer
                         };
                         partsCarsToImport.Add(newPartCar);
                     }
-
                 }
-                context.Cars.AddRange(carsToImport);
+
+                //context.Cars.AddRange(carsToImport); // Actually it's not needed, since EF will find the new cars from mapping entities
                 context.PartsCars.AddRange(partsCarsToImport);
 
                 context.SaveChanges();
@@ -164,9 +203,10 @@ namespace CarDealer
             return $"Successfully imported {carsToImport.Count}.";
         }
 
-        //Problem 12
+        // Problem 12
         public static string ImportCustomers(CarDealerContext context, string inputJson)
         {
+            // Just in-memory collection of Entity objects (not related to DB!)
             ICollection<Customer> customersToImport = new List<Customer>();
 
             IEnumerable<ImportCustomerDto>? customerDtos = JsonConvert
@@ -182,7 +222,7 @@ namespace CarDealer
 
                     bool isBirthDateValid = DateTime
                         .TryParseExact(customerDto.Birthdate, "yyyy-MM-dd'T'HH:mm:ss",
-                        CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime birthDate);
+                            CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime birthDate);
                     bool isYoungDriverValid = bool
                         .TryParse(customerDto.IsYoungDriver, out bool isYoungDriver);
                     if ((!isBirthDateValid) || (!isYoungDriverValid))
@@ -194,7 +234,7 @@ namespace CarDealer
                     {
                         Name = customerDto.Name,
                         BirthDate = birthDate,
-                        IsYoungDriver = isYoungDriver,
+                        IsYoungDriver = isYoungDriver
                     };
                     customersToImport.Add(newCustomer);
                 }
@@ -207,6 +247,7 @@ namespace CarDealer
             return $"Successfully imported {customersToImport.Count}.";
         }
 
+
         //Problem 13
         public static string ImportSales(CarDealerContext context, string inputJson)
         {
@@ -218,9 +259,21 @@ namespace CarDealer
             {
                 foreach (ImportSaleDto saleDto in saleDtos)
                 {
+                    if (!IsValid(saleDto))
+                        continue;
+
                     bool isCarIdExisting = context
-                        .Cars.Any(c => c.Id == saleDto.CarId);
+                        .Cars
+                        .Any(c => c.Id == saleDto.CarId);
                     if (!isCarIdExisting)
+                    {
+                        continue;
+                    }
+
+                    bool isCustomerIdExisting = context
+                        .Customers
+                        .Any(cu => cu.Id == saleDto.CustomerId);
+                    if (!isCustomerIdExisting)
                     {
                         continue;
                     }
@@ -241,10 +294,185 @@ namespace CarDealer
             return $"Successfully imported {salesToImport.Count}.";
         }
 
+        //// Problem 13
+        ////public static string ImportSales(CarDealerContext context, string inputJson)
+        ////{
+        ////    // Collection to hold sales to import
+        ////    ICollection<Sale> salesToImport = new List<Sale>();
+
+        ////    // Deserialize input JSON into DTOs
+        ////    IEnumerable<ImportSaleDto>? saleDtos = JsonConvert
+        ////        .DeserializeObject<ImportSaleDto[]>(inputJson);
+
+        ////    if (saleDtos != null)
+        ////    {
+        ////        foreach (ImportSaleDto saleDto in saleDtos)
+        ////        {
+        ////            // Validate DTO
+        ////            if (!IsValid(saleDto))
+        ////                continue;
+
+        ////            // Check that the car exists
+        ////            if (!context.Cars.Any(c => c.Id == saleDto.CarId))
+        ////                continue;
+
+        ////            // Check that the customer exists
+        ////            if (!context.Customers.Any(cu => cu.Id == saleDto.CustomerId))
+        ////                continue;
+
+        ////            // **Skip duplicate sales for the same car**
+        ////            if (context.Sales.Any(s => s.CarId == saleDto.CarId))
+        ////                continue;
+
+        ////            // Create new Sale entity
+        ////            Sale newSale = new Sale()
+        ////            {
+        ////                CarId = saleDto.CarId,
+        ////                CustomerId = saleDto.CustomerId,
+        ////                Discount = saleDto.Discount
+        ////            };
+
+        ////            salesToImport.Add(newSale);
+        ////        }
+
+        ////        // Save all new sales to the database
+        ////        context.Sales.AddRange(salesToImport);
+        ////        context.SaveChanges();
+        ////    }
+
+        ////    return $"Successfully imported {salesToImport.Count}.";
+        ////}
+
+
+        ////public static string ImportSales(CarDealerContext context, string inputJson)
+        ////{
+        ////    var saleDtos = JsonConvert.DeserializeObject<ImportSaleDto[]>(inputJson);
+
+        ////    List<Sale> sales = new List<Sale>();
+
+        ////    foreach (var saleDto in saleDtos)
+        ////    {
+        ////        if (!context.Cars.Any(c => c.Id == saleDto.CarId))
+        ////            continue;
+
+        ////        if (!context.Customers.Any(c => c.Id == saleDto.CustomerId))
+        ////            continue;
+
+        ////        // Prevent duplicate sales for the same car (1 car = 1 sale)
+        ////        if (context.Sales.Any(s => s.CarId == saleDto.CarId))
+        ////            continue;
+
+        ////        sales.Add(new Sale()
+        ////        {
+        ////            CarId = saleDto.CarId,
+        ////            CustomerId = saleDto.CustomerId,
+        ////            Discount = saleDto.Discount
+        ////        });
+        ////    }
+
+        ////    context.Sales.AddRange(sales);
+        ////    context.SaveChanges();
+
+        ////    return $"Successfully imported {sales.Count}.";
+        ////}
+        ///
+        //public static string ImportSales(CarDealerContext context, string inputJson)
+        //{
+        //    ICollection<Sale> salesToImport = new List<Sale>();
+
+        //    ICollection<ImportSaleDto>? saleDtos = JsonConvert
+        //        .DeserializeObject<ImportSaleDto[]>(inputJson);
+        //    if (saleDtos != null)
+        //    {
+        //        foreach (ImportSaleDto saleDto in saleDtos)
+        //        {
+        //            if (!IsValid(saleDto))
+        //            {
+        //                continue;
+        //            }
+        //            bool isCarIdExisting = context
+        //                .Cars
+        //                .Any(c => c.Id == saleDto.CarId);
+        //            if (!isCarIdExisting)
+        //            {
+        //                continue;
+        //            }
+
+        //            bool isCustomerIdExisting = context
+        //                .Customers
+        //                .Any(cu => cu.Id == saleDto.CustomerId);
+        //            if (!isCustomerIdExisting)
+        //            {
+        //                continue;
+        //            }
+
+        //            Sale newSale = new Sale()
+        //            {
+        //                CarId = saleDto.CarId,
+        //                CustomerId = saleDto.CustomerId,
+        //                Discount = saleDto.Discount
+        //            };
+        //            salesToImport.Add(newSale);
+        //        }
+
+        //        context.Sales.AddRange(salesToImport);
+        //        context.SaveChanges();
+        //    }
+
+        //    return $"Successfully imported {salesToImport.Count}.";
+        //}
+
+        //// Problem 19
+        //public static string GetSalesWithAppliedDiscount(CarDealerContext context)
+        //{
+        //    var top10Sales = context
+        //        .Sales
+        //        .Include(s => s.Customer)
+        //        .Include(s => s.Car)
+        //        .ThenInclude(c => c.PartsCars)
+        //        .ThenInclude(pc => pc.Part)
+        //        .AsNoTracking()
+        //        .Select(s => new
+        //        {
+        //            Car = new
+        //            {
+        //                Make = s.Car.Make,
+        //                Model = s.Car.Model,
+        //                TraveledDistance = s.Car.TraveledDistance,
+        //            },
+        //            CustomerName = s.Customer.Name,
+        //            CustomerIsYoungDriver = s.Customer.IsYoungDriver,
+        //            Discount = s.Discount,
+        //            Price = s.Car.PartsCars
+        //                .Select(pc => pc.Part)
+        //                .Sum(p => p.Price)
+        //        })
+        //        .Take(10)
+        //        .ToArray();
+
+        //    var saleExportDtos = top10Sales
+        //        .Select(s => new
+        //        {
+        //            car = s.Car,
+        //            customerName = s.CustomerName,
+        //            discount = s.Discount.ToString("f2"),
+        //            price = s.Price.ToString("f2"),
+        //            priceWithDiscount = (s.Price - (s.Price * (s.Discount / 100))).ToString("f2")
+        //        })
+        //        .ToArray();
+
+        //    string jsonResult = JsonConvert
+        //        .SerializeObject(saleExportDtos, Formatting.Indented);
+        //    return jsonResult;
+        //}
+
         private static bool IsValid(object obj)
         {
+            // These two variables are required by the Validator.TryValidateObject method
+            // We will not use them for now...
+            // We are just using the Validation result (true or false)
             ValidationContext validationContext = new ValidationContext(obj);
-            ICollection<ValidationResult> validationResults 
+            ICollection<ValidationResult> validationResults
                 = new List<ValidationResult>();
 
             return Validator

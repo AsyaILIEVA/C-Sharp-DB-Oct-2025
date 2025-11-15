@@ -1,21 +1,16 @@
-﻿using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace CarDealer.DTOs.Import
+﻿namespace CarDealer.DTOs.Import
 {
+    using Newtonsoft.Json;
+
     public class ImportSaleDto
     {
         [JsonProperty("carId")]
-        public int CarId { get; set; }
+        public int CarId { get; set; } 
 
         [JsonProperty("customerId")]
-        public int CustomerId { get; set; }
+        public int CustomerId { get; set; } 
 
         [JsonProperty("discount")]
-        public int Discount { get; set; }
+        public int Discount { get; set; } 
     }
 }

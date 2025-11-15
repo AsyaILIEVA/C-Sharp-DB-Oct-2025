@@ -1,13 +1,9 @@
-﻿using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace CarDealer.DTOs.Import
+﻿namespace CarDealer.DTOs.Import
 {
+    using System.ComponentModel.DataAnnotations;
+
+    using Newtonsoft.Json;
+
     public class ImportCustomerDto
     {
         [Required]
