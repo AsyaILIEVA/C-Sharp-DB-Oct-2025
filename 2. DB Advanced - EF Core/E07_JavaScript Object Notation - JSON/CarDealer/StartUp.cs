@@ -46,10 +46,31 @@
             //string result = GetTotalSalesByCustomer(dbContext);
             //Console.WriteLine(result);
 
-            string result = GetCarsWithTheirListOfParts(dbContext);
+            //string result = GetCarsWithTheirListOfParts(dbContext);
+            //Console.WriteLine(result);
+
+            string result = GetLocalSuppliers(dbContext);
             Console.WriteLine(result);
 
 
+        }
+        //P16      
+        public static string GetLocalSuppliers(CarDealerContext context)
+        {
+            var suppliers = context.Suppliers
+                .Where(s => !s.IsImporter)         // local suppliers only
+                .Select(s => new
+                {
+                    Id = s.Id,
+                    Name = s.Name,
+                    PartsCount = s.Parts.Count     // number of parts they supply
+                })
+                .ToList();
+
+            string jsonResult = JsonConvert.SerializeObject(suppliers,
+                Formatting.Indented);
+
+            return jsonResult;
         }
 
         //P17
