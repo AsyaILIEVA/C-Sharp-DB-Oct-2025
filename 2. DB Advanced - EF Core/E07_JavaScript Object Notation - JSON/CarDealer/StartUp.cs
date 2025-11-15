@@ -43,9 +43,45 @@
             //string result = GetSalesWithAppliedDiscount(dbContext);
             //Console.WriteLine(result);
 
-            string result = GetTotalSalesByCustomer(dbContext);
+            //string result = GetTotalSalesByCustomer(dbContext);
+            //Console.WriteLine(result);
+
+            string result = GetCarsWithTheirListOfParts(dbContext);
             Console.WriteLine(result);
+
+
         }
+
+        //P17
+        public static string GetCarsWithTheirListOfParts(CarDealerContext context)
+        {
+            var cars = context.Cars
+                .Select(c => new
+                {
+                    car = new
+                    {
+                        Make = c.Make,
+                        Model = c.Model,
+                        TraveledDistance = c.TraveledDistance
+                    },
+                    parts = c.PartsCars
+                        .OrderByDescending(pc => pc.Part.Price)   // ← ORDER BY DECIMAL HERE
+                        .Select(pc => new
+                        {
+                            Name = pc.Part.Name,
+                            Price = pc.Part.Price.ToString("F2") // ← FORMAT AFTER ORDERING
+                        })
+                        .ToList()
+                })
+                .ToList();
+
+            string jsonResult = Newtonsoft.Json.JsonConvert.SerializeObject(
+                cars,
+                Newtonsoft.Json.Formatting.Indented);
+
+            return jsonResult;
+        }
+
 
         //18. Export Total Sales by Customer
         public static string GetTotalSalesByCustomer(CarDealerContext context)
