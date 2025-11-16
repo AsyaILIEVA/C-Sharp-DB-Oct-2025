@@ -49,11 +49,35 @@
             //string result = GetCarsWithTheirListOfParts(dbContext);
             //Console.WriteLine(result);
 
-            string result = GetLocalSuppliers(dbContext);
-            Console.WriteLine(result);
+            //string result = GetLocalSuppliers(dbContext);
+            //Console.WriteLine(result);
 
-
+            string json = GetCarsFromMakeToyota(dbContext);
+            Console.WriteLine(json);
         }
+
+        //P15
+
+        public static string GetCarsFromMakeToyota(CarDealerContext context)
+        {
+            var toyotaCars = context.Cars
+                .Where(c => c.Make == "Toyota")
+                .OrderBy(c => c.Model)
+                .ThenByDescending(c => c.TraveledDistance)
+                .Select(c => new
+                {
+                    c.Id,
+                    c.Make,
+                    c.Model,
+                    TraveledDistance = c.TraveledDistance
+                })
+                .ToArray();
+
+            string json = JsonConvert.SerializeObject(toyotaCars, Formatting.Indented);
+            return json;
+        }
+
+
         //P16      
         public static string GetLocalSuppliers(CarDealerContext context)
         {
