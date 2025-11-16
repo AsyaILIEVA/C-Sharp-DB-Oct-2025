@@ -52,8 +52,29 @@
             //string result = GetLocalSuppliers(dbContext);
             //Console.WriteLine(result);
 
-            string json = GetCarsFromMakeToyota(dbContext);
+            //string json = GetCarsFromMakeToyota(dbContext);
+            //Console.WriteLine(json);
+
+            string json = GetOrderedCustomers(dbContext);
             Console.WriteLine(json);
+        }
+
+        //P14
+        public static string GetOrderedCustomers(CarDealerContext context)
+        {
+            var customers = context.Customers
+                .OrderBy(c => c.BirthDate)
+                .ThenBy(c => c.IsYoungDriver)
+                .Select(c => new
+                {
+                    c.Name,
+                    BirthDate = c.BirthDate.ToString("dd/MM/yyyy"),
+                    c.IsYoungDriver
+                })
+                .ToArray();
+
+            string json = JsonConvert.SerializeObject(customers, Formatting.Indented);
+            return json;
         }
 
         //P15
