@@ -16,13 +16,16 @@ namespace ProductShop
 
             string jsonFileDirPath = Path
                 .Combine(Directory.GetCurrentDirectory(), "../../../Datasets/");
-            string jsonFileName = "users.json";
+            string jsonFileName = "products.json";
             string jsonFileText = File
                 .ReadAllText(jsonFileDirPath + jsonFileName);
 
             //Console.WriteLine(jsonFileDirPath);
 
-            string result = ImportUsers(dbContext, jsonFileText);
+            //string result = ImportUsers(dbContext, jsonFileText);
+            //Console.WriteLine(result);
+
+            string result = ImportProducts(dbContext, jsonFileText);
             Console.WriteLine(result);
         }
 
@@ -60,6 +63,81 @@ namespace ProductShop
             return $"Successfully imported {usersToImport.Count}";
         }
 
+        // P02
+        public static string ImportProducts(ProductShopContext context, string inputJson)
+        {
+            ICollection<Product> productsToImport = new List<Product>();
+
+            IEnumerable<ImportProductDto>? productDtos = JsonConvert
+                .DeserializeObject<ImportProductDto[]>(inputJson);
+            if (productDtos != null)
+            {
+                foreach (ImportProductDto productDto in productDtos)
+                {
+                    if (!IsValid(productDto))
+                    {
+                        continue;
+                    }
+
+                    bool isSellerIdValid = int
+                       .TryParse(productDto.SellerId, out int sellerId);
+                    if (!isSellerIdValid)
+                    {
+                        continue;
+                    }
+
+                    Product product = new Product()
+                    {
+                        Name = productDto.Name,
+                        Price = productDto.Price,
+                        SellerId = sellerId,
+                        BuyerId = productDto.BuyerId,
+                    };
+
+                    productsToImport.Add(product);                                        
+                }
+                context.Products.AddRange(productsToImport);
+                context.SaveChanges();
+            }
+
+            return $"Successfully imported {productsToImport.Count}";            
+        }
+
+        // P03
+        public static string ImportCategories(ProductShopContext context, string inputJson)
+        {
+            ICollection<Category> categoriesToImport = new List<Category>();
+
+            IEnumerable<ImportCategoryDto>? categoryDtos = JsonConvert
+                .DeserializeObject<ImportCategoryDto[]>(inputJson);
+            if (categoryDtos != null)
+            {
+                foreach (ImportCategoryDto categoryDto in categoryDtos)
+                {
+                    if (!IsValid(categoryDto))
+                    {
+                        continue;
+                    }
+
+                    if (categoryDto.Name == null)
+                    {
+                        continue;
+                    }
+
+                    Category category = new Category()
+                    {
+                        Name = categoryDto.Name,
+                    };
+
+                    categoriesToImport.Add(category);
+                }
+
+                context.AddRange(categoriesToImport);
+                context.SaveChanges();
+            }
+
+            return $"Successfully imported {categoriesToImport.Count}";
+        }
 
         public static bool IsValid(object obj)
         {
