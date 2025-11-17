@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using ProductShop.Data;
 using ProductShop.DTOs.Import;
 using ProductShop.Models;
@@ -16,7 +17,7 @@ namespace ProductShop
 
             string jsonFileDirPath = Path
                 .Combine(Directory.GetCurrentDirectory(), "../../../Datasets/");
-            string jsonFileName = "categories.json";
+            string jsonFileName = "categories-products.json";
             string jsonFileText = File
                 .ReadAllText(jsonFileDirPath + jsonFileName);
 
@@ -28,7 +29,10 @@ namespace ProductShop
             //string result = ImportProducts(dbContext, jsonFileText);
             //Console.WriteLine(result);
 
-            string result = ImportCategories(dbContext, jsonFileText);
+            //string result = ImportCategories(dbContext, jsonFileText);
+            //Console.WriteLine(result);
+
+            string result = ImportCategoryProducts(dbContext, jsonFileText);
             Console.WriteLine(result);
         }
 
@@ -140,6 +144,50 @@ namespace ProductShop
             }
 
             return $"Successfully imported {categoriesToImport.Count}";
+        }
+
+        //P04
+        public static string ImportCategoryProducts(ProductShopContext context, string inputJson)
+        {
+            ICollection<CategoryProduct> categoryProductsToImport
+                = new List<CategoryProduct>();
+
+            IEnumerable<int> existingCategoryIds = context
+                .Categories
+                .AsNoTracking()
+                .Select(c => c.Id)
+                .ToArray();
+            IEnumerable<int> existingProductIds = context
+                .Products
+                .AsNoTracking()
+                .Select(p => p.Id)
+                .ToArray();
+
+            ImportCategoryProductDto[]? importCategoryProductDtos = JsonConvert
+                .DeserializeObject<ImportCategoryProductDto[]>(inputJson);
+            if (importCategoryProductDtos != null)
+            {
+                foreach (ImportCategoryProductDto cpDto in importCategoryProductDtos)
+                {
+                    if (!IsValid(cpDto))
+                    {
+                        continue;
+                    }
+
+                    CategoryProduct newCategoryProduct = new CategoryProduct()
+                    {
+                        CategoryId = cpDto.CategoryId,
+                        ProductId = cpDto.ProductId
+                    };
+
+                    categoryProductsToImport.Add(newCategoryProduct);
+                }
+
+                context.AddRange(categoryProductsToImport);
+                context.SaveChanges();
+            }
+
+            return $"Successfully imported {categoryProductsToImport.Count}";
         }
 
         public static bool IsValid(object obj)
