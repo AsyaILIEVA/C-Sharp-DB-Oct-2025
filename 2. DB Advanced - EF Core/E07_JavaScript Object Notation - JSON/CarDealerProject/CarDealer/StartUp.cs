@@ -19,11 +19,11 @@
             //dbContext.Database.EnsureDeleted();
             //dbContext.Database.EnsureCreated();
 
-            //string jsonFileDirPath = Path
-            //    .Combine(Directory.GetCurrentDirectory(), "../../../Datasets/");
-            //string jsonFileName = "sales.json";
-            //string jsonFileText = File
-            //    .ReadAllText(jsonFileDirPath + jsonFileName);
+            string jsonFileDirPath = Path
+                .Combine(Directory.GetCurrentDirectory(), "../../../Datasets/");
+            string jsonFileName = "sales.json";
+            string jsonFileText = File
+                .ReadAllText(jsonFileDirPath + jsonFileName);
 
             //string result = ImportSuppliers(dbContext, jsonFileText);
             //Console.WriteLine(result);
@@ -37,8 +37,8 @@
             //string result = ImportCustomers(dbContext, jsonFileText);
             //Console.WriteLine(result);
 
-            //string result = ImportSales(dbContext, jsonFileText);
-            //Console.WriteLine(result);
+            string result = ImportSales(dbContext, jsonFileText);
+            Console.WriteLine(result);
 
             //string result = GetSalesWithAppliedDiscount(dbContext);
             //Console.WriteLine(result);
@@ -55,8 +55,8 @@
             //string json = GetCarsFromMakeToyota(dbContext);
             //Console.WriteLine(json);
 
-            string json = GetOrderedCustomers(dbContext);
-            Console.WriteLine(json);
+            //string json = GetOrderedCustomers(dbContext);
+            //Console.WriteLine(json);
         }
 
         //P14
@@ -367,7 +367,7 @@
                     bool isCarIdExisting = context
                         .Cars
                         .Any(c => c.Id == saleDto.CarId);
-                    if (!isCarIdExisting)
+                    if (isCarIdExisting)
                     {
                         continue;
                     }
@@ -375,7 +375,7 @@
                     bool isCustomerIdExisting = context
                         .Customers
                         .Any(cu => cu.Id == saleDto.CustomerId);
-                    if (!isCustomerIdExisting)
+                    if (isCustomerIdExisting)
                     {
                         continue;
                     }
