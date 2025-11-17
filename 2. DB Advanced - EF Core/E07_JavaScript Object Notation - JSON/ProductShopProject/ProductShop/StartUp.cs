@@ -16,7 +16,7 @@ namespace ProductShop
 
             string jsonFileDirPath = Path
                 .Combine(Directory.GetCurrentDirectory(), "../../../Datasets/");
-            string jsonFileName = "products.json";
+            string jsonFileName = "categories.json";
             string jsonFileText = File
                 .ReadAllText(jsonFileDirPath + jsonFileName);
 
@@ -25,7 +25,10 @@ namespace ProductShop
             //string result = ImportUsers(dbContext, jsonFileText);
             //Console.WriteLine(result);
 
-            string result = ImportProducts(dbContext, jsonFileText);
+            //string result = ImportProducts(dbContext, jsonFileText);
+            //Console.WriteLine(result);
+
+            string result = ImportCategories(dbContext, jsonFileText);
             Console.WriteLine(result);
         }
 
