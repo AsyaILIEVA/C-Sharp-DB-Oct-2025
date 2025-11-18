@@ -6,17 +6,17 @@ namespace ProductShop.DTOs.Import
     public class ImportProductDto
     {
         [Required]
-        [JsonProperty("name")]
+        [JsonProperty("Name")]
         public string Name { get; set; } = null!;
 
-        [JsonProperty("price")]
+        [JsonProperty("Price")]
         public decimal Price { get; set; }
 
         [Required]
-        [JsonProperty("sellerId")]
+        [JsonProperty("SellerId")]
         public string SellerId { get; set; } = null!;
 
-        [JsonProperty("buyerId")]
+        [JsonProperty("BuyerId")]
         public int? BuyerId { get; set; }
 
         

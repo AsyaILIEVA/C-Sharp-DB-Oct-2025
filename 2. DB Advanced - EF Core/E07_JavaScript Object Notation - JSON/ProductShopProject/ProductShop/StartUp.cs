@@ -4,6 +4,8 @@ using ProductShop.Data;
 using ProductShop.DTOs.Import;
 using ProductShop.Models;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
+using System.Xml.Linq;
 
 namespace ProductShop
 {
@@ -32,7 +34,10 @@ namespace ProductShop
             //string result = ImportCategories(dbContext, jsonFileText);
             //Console.WriteLine(result);
 
-            string result = ImportCategoryProducts(dbContext, jsonFileText);
+            //string result = ImportCategoryProducts(dbContext, jsonFileText);
+            //Console.WriteLine(result);
+
+            string result = GetProductsInRange(dbContext);
             Console.WriteLine(result);
         }
 
@@ -190,6 +195,33 @@ namespace ProductShop
             return $"Successfully imported {categoryProductsToImport.Count}";
         }
 
+        //P05
+        public static string GetProductsInRange(ProductShopContext context)
+        // Get all products in a specified price range:  500 to 1000 (inclusive).
+        // Order them by price(from lowest to highest).
+        // Select only the product name, price and the full name of the seller.
+        // Export the result to JSON.
+        {
+            var productsInRange = context
+                .Products
+                .AsNoTracking()
+                .Where(p => p.Price >= 500 && p.Price <= 1000)
+                .OrderBy(p => p.Price)
+                .Select(p => new 
+                {
+                    name = p.Name,
+                    price = p.Price,
+                    seller = p.Seller.FirstName == null
+            ? " " + p.Seller.LastName
+            : p.Seller.FirstName + " " + p.Seller.LastName
+                })
+                .ToArray();
+
+
+            string jsonResult = JsonConvert
+                .SerializeObject(productsInRange, Formatting.Indented);
+            return jsonResult;
+        }
         public static bool IsValid(object obj)
         {
             var validationContext = new ValidationContext(obj);
