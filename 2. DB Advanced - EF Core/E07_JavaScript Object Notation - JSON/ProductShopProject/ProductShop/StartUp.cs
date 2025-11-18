@@ -37,7 +37,10 @@ namespace ProductShop
             //string result = ImportCategoryProducts(dbContext, jsonFileText);
             //Console.WriteLine(result);
 
-            string result = GetProductsInRange(dbContext);
+            //string result = GetProductsInRange(dbContext);
+            //Console.WriteLine(result);
+
+            string result = GetSoldProducts(dbContext);
             Console.WriteLine(result);
         }
 
@@ -220,6 +223,35 @@ namespace ProductShop
 
             string jsonResult = JsonConvert
                 .SerializeObject(productsInRange, Formatting.Indented);
+            return jsonResult;
+        }
+
+        //P06
+        public static string GetSoldProducts(ProductShopContext context)
+        {
+            var users = context.Users
+                .Where(u => u.ProductsSold.Any(p => p.Buyer != null))
+                .OrderBy(u => u.LastName)
+                .ThenBy(u => u.FirstName)
+                .Select(u => new
+                {
+                    firstName = u.FirstName,
+                    lastName = u.LastName,
+                    soldProducts = u.ProductsSold
+                        .Where(p => p.Buyer != null)
+                        .Select(p => new
+                        {
+                            name = p.Name,
+                            price = p.Price,
+                            buyerFirstName = p.Buyer.FirstName,
+                            buyerLastName = p.Buyer.LastName
+                        })
+                        .ToArray()
+                })
+                .ToArray();
+
+            string jsonResult = JsonConvert
+                .SerializeObject(users, Formatting.Indented);
             return jsonResult;
         }
         public static bool IsValid(object obj)
